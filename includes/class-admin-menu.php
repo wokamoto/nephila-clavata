@@ -102,10 +102,14 @@ class NephilaClavataAdmin {
 			isset($this->options['region']) ? $this->options['region'] : null
 			);
 		$regions = $this->regions;
-		$buckets = array();
+		$buckets = false;
 		if ($s3) {
 			$regions = $s3->get_regions();
 			$buckets = $s3->list_buckets();
+		}
+		if (!$buckets) {
+			unset($this->option_keys['bucket']);
+			unset($this->option_keys['s3_url']);
 		}
 
 ?>
@@ -131,7 +135,7 @@ class NephilaClavataAdmin {
 		$input_field = sprintf('<td><input type="text" name="%1$s" value="%2$s" id="%1$s" size=100 /></td>'."\n", $field, esc_attr($this->options[$field]));
 		switch ($field) {
 		case 'region':
-			if (count($regions) > 0) {
+			if ($regions && count($regions) > 0) {
 				$input_field  = sprintf('<td><select name="%1$s">', $field);
 				$input_field .= '<option value=""></option>';
 				foreach ($regions as $region) {
@@ -144,7 +148,7 @@ class NephilaClavataAdmin {
 			}
 			break;
 		case 'bucket':
-			if (count($buckets) > 0) {
+			if ($buckets && count($buckets) > 0) {
 				$input_field  = sprintf('<td><select name="%1$s">', $field);
 				$input_field .= '<option value=""></option>';
 				foreach ($buckets as $bucket) {
