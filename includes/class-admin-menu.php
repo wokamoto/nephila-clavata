@@ -34,7 +34,6 @@ class NephilaClavataAdmin {
 	function __construct(){
 		$this->options = $this->get_option();
 		$this->plugin_basename = plugin_basename(dirname(dirname(__FILE__)).'/plugin.php');
-		$this->s3 = $s3;
 
 		add_action('admin_menu', array(&$this, 'admin_menu'));
 		add_filter('plugin_action_links', array(&$this, 'plugin_setting_links'), 10, 2 );
