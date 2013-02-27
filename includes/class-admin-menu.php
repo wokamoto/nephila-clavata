@@ -84,13 +84,14 @@ class NephilaClavataAdmin {
 				}
 			}
 			$options = $iv->input($fields);
-			if (!isset($options['s3_url']) || empty($options['s3_url'])) {
+			if ((!isset($options['s3_url']) || empty($options['s3_url'])) && (isset($options['bucket']) && !empty($options['bucket']))) {
 				$options['s3_url'] = sprintf(
 					'http://%1$s.s3-website-%2$s.amazonaws.com',
-					strtolower($options['bucket'],
-					strtolower(str_replace('_','-',$options['bucket']))
-					)
+					strtolower($options['bucket']),
+					strtolower(str_replace('_','-',$options['region']))
+					);
 			}
+			$options['s3_url'] = untrailingslashit($options['s3_url']);
 			if (function_exists('dbgx_trace_var')) {
 				dbgx_trace_var($options);
 			}
