@@ -7,7 +7,6 @@ if ( !class_exists('S3_helper') )
 class NephilaClavataAdmin {
 	const OPTION_KEY  = 'nephila_clavata';
 	const OPTION_PAGE = 'nephila-clavata';
-	const TEXT_DOMAIN = 'nephila-clavata';
 
 	private $options = array();
 	private $plugin_basename;
@@ -54,7 +53,7 @@ class NephilaClavataAdmin {
 	public function admin_menu() {
 		global $wp_version;
 
-		$title = __( 'Nephila clavata', self::TEXT_DOMAIN );
+		$title = __( 'Nephila clavata', NephilaClavata::TEXT_DOMAIN );
 		$this->admin_hook = add_options_page($title, $title, 'manage_options', self::OPTION_PAGE, array(&$this, 'options_page'));
 		$this->admin_action = admin_url('/options-general.php') . '?page=' . self::OPTION_PAGE;
 	}
@@ -64,7 +63,7 @@ class NephilaClavataAdmin {
 		$nonce_name   = '_wpnonce_update_options';
 
 		$this->options = $this->get_option();
-		$title = __( 'Nephila clavata', self::TEXT_DOMAIN );
+		$title = __( 'Nephila clavata', NephilaClavata::TEXT_DOMAIN );
 
 		// Update options
 		$iv = new InputValidator('POST');
@@ -98,7 +97,7 @@ class NephilaClavataAdmin {
 
 			// update options
 			update_option(self::OPTION_KEY, $options);
-			printf('<div id="message" class="updated fade"><p><strong>%s</strong></p></div>'."\n", __('Done!', self::TEXT_DOMAIN));
+			printf('<div id="message" class="updated fade"><p><strong>%s</strong></p></div>'."\n", __('Done!', NephilaClavata::TEXT_DOMAIN));
 			$this->options = $options;
 			unset($options);
 		}
@@ -138,7 +137,7 @@ class NephilaClavataAdmin {
 		extract($args);
 
 		$output  = "<tr>\n";
-		$output .= sprintf('<th><label for="%1$s">%2$s</label></th>'."\n", $field, __($label, self::TEXT_DOMAIN));
+		$output .= sprintf('<th><label for="%1$s">%2$s</label></th>'."\n", $field, __($label, NephilaClavata::TEXT_DOMAIN));
 		$input_field = sprintf('<td><input type="text" name="%1$s" value="%2$s" id="%1$s" size=100 /></td>'."\n", $field, esc_attr($this->options[$field]));
 		switch ($field) {
 		case 'region':
