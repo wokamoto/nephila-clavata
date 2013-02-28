@@ -51,6 +51,8 @@ class NephilaClavata {
 		if (!is_admin()) {
 			add_filter('the_content', array(&$this, 'the_content'));
 			add_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
+		} else {
+			add_action('load-upload.php', function(){add_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);});
 		}
 	}
 
