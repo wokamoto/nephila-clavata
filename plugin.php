@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Nephila clavata
-Version: 0.0.2
+Version: 0.0.3
 Plugin URI: https://github.com/wokamoto/nephila-clavata
 Description: Media uploader for AWS S3.Allows you to mirror your WordPress media uploads over to Amazon S3 for storage and delivery. 
 Author: wokamoto
@@ -38,47 +38,59 @@ class NephilaClavata {
 	const DEBUG_MODE = true;
 	const TEXT_DOMAIN = 'nephila-clavata';
 
-	private $s3;
-	private $options = array();
+	private $s3;                // S3 Object
+	private $options = array(); // this plugin options
 
 	function __construct(){
-		$admin = new NephilaClavataAdmin($this);
-		$this->options = $admin->get_options();
-		if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
-			dbgx_trace_var($this->options, 'Nephila clavata option');
-		}
+		$this->options = NephilaClavataAdmin::get_option();
 
-		if (!is_admin()) {
-			add_filter('the_content', array(&$this, 'the_content'));
-			add_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
-		} else {
-			add_action('load-upload.php', function(){add_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);});
-		}
+		add_filter('the_content', array(&$this, 'the_content'));
+		add_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
 	}
 
+	static public function plugin_basename() {
+		return plugin_basename(__FILE__);
+	}
+
+	// the_content filter hook
 	public function the_content($content){
-		$post_id = get_the_ID();
+		$post_id = intval(get_the_ID());
+
 		remove_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
 		$content = $this->replace_s3_url($content, $post_id);
 		add_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
+
 		return $content;
 	}
 
+	// wp_get_attachment_url filter hook
 	public function get_attachment_url($url, $post_id = null) {
 		static $urls = array();
+
 		if (!isset($post_id))
 			$post_id = get_the_ID();
+		$post_id = intval($post_id);
 		if (isset($urls[$post_id]))
 			return $urls[$post_id];
+
 		remove_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
 		$url = $this->replace_s3_url($url, $post_id);
-		$urls[$post_id] = $url;
 		add_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
+
+		$urls[$post_id] = $url;
 		return $url;
 	}
 
+	// Replace URL
 	private function replace_s3_url($content, $post_id){
+		global $pagenow;
+
 		if (empty($content))
+			return $content;
+
+		$s3_bucket = isset($this->options['bucket']) ? $this->options['bucket'] : false;
+		$s3_url = isset($this->options['s3_url']) ? $this->options['s3_url'] : false;
+		if (!$s3_bucket || !$s3_url)
 			return $content;
 
 		$attachments = $this->get_post_attachments($post_id);
@@ -91,10 +103,16 @@ class NephilaClavata {
 		$attachments_meta = array();
 		$search = array();
 		$replace = array();
-		$s3_url = isset($this->options['s3_url']) ? $this->options['s3_url'] : '/';
 		foreach ($attachments as $attachment) {
 			$S3_medias_new = $this->get_s3_media_info($attachment->ID);
-			$S3_medias_old = (array)get_post_meta($attachment->ID, self::META_KEY, true);
+			$S3_medias_old = get_post_meta($attachment->ID, self::META_KEY, true);
+			if (is_array($S3_medias_old)) {
+				if (isset($S3_medias_old[$s3_bucket]))
+					$S3_medias_old = (array)$S3_medias_old[$s3_bucket];
+			} else {
+				$S3_medias_old = array();
+			}
+
 			if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
 				dbgx_trace_var($S3_medias_new);
 				dbgx_trace_var($S3_medias_old);
@@ -121,8 +139,8 @@ class NephilaClavata {
 				if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
 					dbgx_trace_var($S3_medias);
 				}
-				if (count($S3_medias) > 0)
-					add_post_meta($attachment->ID, self::META_KEY, $S3_medias, true);
+				if (count($S3_medias) > 0 && $S3_medias !== $S3_medias_old)
+					add_post_meta($attachment->ID, self::META_KEY, array($s3_bucket => $S3_medias), true);
 			} else {
 				foreach($S3_medias_new as $size => $val ) {
 					$search[]  = $val['url'];
@@ -131,16 +149,16 @@ class NephilaClavata {
 			}
 		}
 
-		if (count($search) > 0 && count($replace) > 0)
-			$content = str_replace($search, $replace, $content);
-		if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
-			dbgx_trace_var($search);
-			dbgx_trace_var($replace);
-			dbgx_trace_var($content);
-		}
+		if (is_admin() && $pagenow !== 'upload.php')
+			return $content;
+		if (count($search) <= 0 || count($replace) <= 0)
+			return $content;
+
+		$content = str_replace($search, $replace, $content);
 		return $content;
 	}
 
+	// Initializing S3 object
 	private function s3_init(){
 		if (isset($this->s3))
 			return $this->s3;
@@ -161,19 +179,13 @@ class NephilaClavata {
 		}
 	}
 
+	// Upload file to S3
 	private function s3_upload($filename, $s3_key){
-		if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
-			dbgx_trace_var($filename);
-			dbgx_trace_var($s3_key);
-		}
 		if (!file_exists($filename))
 			return false;
 
 		$s3 = $this->s3_init();
 		if ( $s3 !== false) {
-			if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
-				dbgx_trace_var($s3->object_exists($s3_key));
-			}
 			if ($s3->object_exists($s3_key))
 				return true;
 			$upload_result = $s3->upload($filename, $s3_key);
@@ -186,22 +198,26 @@ class NephilaClavata {
 		}
 	}
 
+	// Get post attachments
 	private function get_post_attachments($post) {
 		static $post_meta = array();
-		global $wpdb;
 
 		if (is_numeric($post)) {
 			$post_id = $post;
 			$post = get_post($post_id);
 			$post_type = $post->post_type;
-		} else {
+		} else if (is_object($post)) {
 			$post_id = $post->ID;
 			$post_type = $post->post_type;
+		} else {
+			return false;
 		}
+
 		if ( !isset($post_meta[$post_id])) {
 			if ($post_type === 'attachment') {
 				$attachments = array(0 => $post);
 			} else {
+				// Get post attachments from media library
 				$attachments = (array)get_posts(array('post_type' => 'attachment', 'post_parent' => $post_id));
 				$upload_dir = wp_upload_dir();
 				$medias = array();
@@ -209,8 +225,11 @@ class NephilaClavata {
 					$medias[] = str_replace($upload_dir['baseurl'].'/', '', $attachment->guid);
 				}
 
+				// Get post attachments from post content
 				$pattern = '#(<a [^>]*href=[\'"])('.preg_quote($upload_dir['baseurl']).'/)([^\'"]*)([\'"][^>]*><img [^>]*></a>)#uism';
 			    if ( preg_match_all($pattern, $post->post_content, $matches, PREG_SET_ORDER) ) {
+					global $wpdb;
+
 					foreach ( $matches as $match ) {
 						if (in_array($match[3], $medias))
 							continue;
@@ -232,18 +251,17 @@ class NephilaClavata {
 
 			$post_meta[$post_id] = count($attachments) > 0 ? $attachments : false;
 		}
-		if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
-			dbgx_trace_var($post_meta[$post_id]);
-		}
 		return $post_meta[$post_id];
 	}
 
+	// Get attachment sizes 
 	private function get_attachment_sizes($attachment_id){
 		$imagedata = wp_get_attachment_metadata($attachment_id);
 		$sizes = array_merge(array('normal'), isset($imagedata['sizes']) ? array_keys($imagedata['sizes']) : array());
 		return $sizes;
 	}
 
+	// Get media file info
 	private function get_s3_media_info($attachment_id) {
 		$sizes = $this->get_attachment_sizes($attachment_id);
 		$images = array();
@@ -259,4 +277,7 @@ class NephilaClavata {
 	}
 
 }
+
+// Go Go Go!
 new NephilaClavata();
+new NephilaClavataAdmin();

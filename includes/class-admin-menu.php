@@ -12,10 +12,10 @@ class NephilaClavataAdmin {
 	private $plugin_basename;
 	private $admin_hook, $admin_action;
 	private $option_keys = array(
-		'access_key' => 'Access Key',
-		'secret_key' => 'Secret Key',
-		'region' => 'Region',
-		'bucket' => 'Bucket',
+		'access_key' => 'AWS Access Key',
+		'secret_key' => 'AWS Secret Key',
+		'region' => 'AWS Region',
+		'bucket' => 'S3 Bucket',
 		's3_url' => 'S3 URL',
 		);
 	private $regions = array(
@@ -32,19 +32,15 @@ class NephilaClavataAdmin {
 
 	function __construct(){
 		$this->options = $this->get_option();
-		$this->plugin_basename = plugin_basename(dirname(dirname(__FILE__)).'/plugin.php');
+		$this->plugin_basename = NephilaClavata::plugin_basename();
 
 		add_action('admin_menu', array(&$this, 'admin_menu'));
 		add_filter('plugin_action_links', array(&$this, 'plugin_setting_links'), 10, 2 );
 	}
 
-	private function get_option(){
+	static public function get_option(){
 		$options = get_option(self::OPTION_KEY);
 		return $options;
-	}
-
-	public function get_options(){
-		return $this->options;
 	}
 
 	//**************************************************************************************
@@ -65,11 +61,12 @@ class NephilaClavataAdmin {
 		$this->options = $this->get_option();
 		$title = __( 'Nephila clavata', NephilaClavata::TEXT_DOMAIN );
 
-		// Update options
 		$iv = new InputValidator('POST');
 		$iv->set_rules($nonce_name, 'required');
+
+		// Update options
 		if (!is_wp_error($iv->input($nonce_name)) && check_admin_referer($nonce_action, $nonce_name)) {
-			// get options
+			// Get posted options
 			$fields = array_keys($this->option_keys);
 			foreach ($fields as $field) {
 				switch ($field) {
@@ -91,17 +88,18 @@ class NephilaClavataAdmin {
 					);
 			}
 			$options['s3_url'] = untrailingslashit($options['s3_url']);
-			if (function_exists('dbgx_trace_var')) {
+			if (NephilaClavata::DEBUG_MODE && function_exists('dbgx_trace_var')) {
 				dbgx_trace_var($options);
 			}
 
-			// update options
+			// Update options
 			update_option(self::OPTION_KEY, $options);
 			printf('<div id="message" class="updated fade"><p><strong>%s</strong></p></div>'."\n", __('Done!', NephilaClavata::TEXT_DOMAIN));
 			$this->options = $options;
 			unset($options);
 		}
 
+		// Get S3 Object
 		$s3 = new S3_helper(
 			isset($this->options['access_key']) ? $this->options['access_key'] : null,
 			isset($this->options['secret_key']) ? $this->options['secret_key'] : null,
@@ -136,8 +134,8 @@ class NephilaClavataAdmin {
 	private function input_field($field, $label, $args = array()){
 		extract($args);
 
-		$output  = "<tr>\n";
-		$output .= sprintf('<th><label for="%1$s">%2$s</label></th>'."\n", $field, __($label, NephilaClavata::TEXT_DOMAIN));
+		$label = sprintf('<th><label for="%1$s">%2$s</label></th>'."\n", $field, __($label, NephilaClavata::TEXT_DOMAIN));
+
 		$input_field = sprintf('<td><input type="text" name="%1$s" value="%2$s" id="%1$s" size=100 /></td>'."\n", $field, esc_attr($this->options[$field]));
 		switch ($field) {
 		case 'region':
@@ -167,9 +165,8 @@ class NephilaClavataAdmin {
 			}
 			break;
 		}
-		$output .= $input_field;
-		$output .= "</tr>\n";
-		echo $output;
+
+		echo "<tr>\n{$label}{$input_field}</tr>\n";
 	}
 
 	//**************************************************************************************
