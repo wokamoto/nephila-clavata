@@ -266,10 +266,11 @@ class NephilaClavata {
 		$sizes = $this->get_attachment_sizes($attachment_id);
 		$images = array();
 		foreach ($sizes as $size) {
+			$home_path = function_exists('get_home_path') ? get_home_path() : ABSPATH;
 			$image_src = wp_get_attachment_image_src($attachment_id, $size);
 			$images[$size] = array(
 				'url' => $image_src[0],
-				'file' => str_replace(home_url('/'), get_home_path(), $image_src[0]),
+				'file' => str_replace(home_url('/'), $home_path, $image_src[0]),
 				's3_key' => str_replace(home_url('/'), '/', $image_src[0]),
 			);
 		}
