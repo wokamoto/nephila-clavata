@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Nephila clavata
-Version: 0.0.3
+Version: 0.0.4
 Plugin URI: https://github.com/wokamoto/nephila-clavata
 Description: Media uploader for AWS S3.Allows you to mirror your WordPress media uploads over to Amazon S3 for storage and delivery. 
 Author: wokamoto
@@ -45,6 +45,7 @@ class NephilaClavata {
 		$this->options = NephilaClavataAdmin::get_option();
 
 		add_filter('the_content', array(&$this, 'the_content'));
+		add_filter('widget_text', array(&$this, 'the_content'));
 		add_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
 	}
 
@@ -226,23 +227,18 @@ class NephilaClavata {
 				}
 
 				// Get post attachments from post content
-				$pattern = '#(<a [^>]*href=[\'"])('.preg_quote($upload_dir['baseurl']).'/)([^\'"]*)([\'"][^>]*><img [^>]*></a>)#uism';
+				$pattern = '#(<a [^>]*href=[\'"])'.preg_quote($upload_dir['baseurl']).'/([^\'"]*)([\'"][^>]*><img [^>]*></a>)#uism';
 			    if ( preg_match_all($pattern, $post->post_content, $matches, PREG_SET_ORDER) ) {
-					global $wpdb;
-
-					foreach ( $matches as $match ) {
-						if (in_array($match[3], $medias))
-							continue;
-						$medias[] = $match[3];
-						$post_id = $wpdb->get_var($wpdb->prepare("
-							select p.ID from {$wpdb->posts} as p inner join {$wpdb->postmeta} as m on p.ID = m.post_id
-							where m.meta_key = %s and m.meta_value = %s limit 1",
-							'_wp_attached_file',
-							$match[3]));
-						$post = get_post($post_id);
-						if ( $post ) {
-							$attachments[] = $post;
-            			}
+					foreach ($matches as $match) {
+						if ($attachment_id = $this->get_attachment_id_from_filename($match[2], $medias))
+							$attachments[] = get_post($attachment_id);
+        			}
+			    }
+				$pattern = '#(<img [^>]*src=[\'"])'.preg_quote($upload_dir['baseurl']).'/([^\'"]*)([\'"][^>]*>)#uism';
+			    if ( preg_match_all($pattern, $post->post_content, $matches, PREG_SET_ORDER) ) {
+					foreach ($matches as $match) {
+						if ($attachment_id = $this->get_attachment_id_from_filename($match[2], $medias))
+							$attachments[] = get_post($attachment_id);
         			}
 			    }
 			    unset($matches);
@@ -252,6 +248,22 @@ class NephilaClavata {
 			$post_meta[$post_id] = count($attachments) > 0 ? $attachments : false;
 		}
 		return $post_meta[$post_id];
+	}
+
+	private function get_attachment_id_from_filename($attachment_file, &$medias = array()){
+		global $wpdb;
+
+		$attachment_file = preg_replace('#^(.*[^/])\-[0-9]+x[0-9]+\.(png|gif|jpe?g)([\?]?.*)$#uism','$1.$2',$attachment_file);
+		if (in_array($attachment_file, $medias))
+			return false;
+
+		$medias[] = $attachment_file;
+		$attachment_id  = $wpdb->get_var($wpdb->prepare("
+			select p.ID from {$wpdb->posts} as p inner join {$wpdb->postmeta} as m on p.ID = m.post_id
+			where m.meta_key = %s and m.meta_value = %s limit 1",
+			'_wp_attached_file',
+			$attachment_file));
+		return $attachment_id;
 	}
 
 	// Get attachment sizes 
