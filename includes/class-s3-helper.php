@@ -83,6 +83,26 @@ class S3_helper {
 		}
 	}
 
+	// S3 Delete
+	public function delete($upload_path, $bucket = null) {
+		if (!$this->s3)
+			return false;
+
+		try {
+			$args = array_merge($this->options, array(
+				'Key'         => $upload_path,
+				));
+			if (isset($bucket))
+				$args['Bucket'] = $bucket;
+			if (!isset($args['Bucket']))
+				return false;
+			$response = $this->s3->deleteObject($args);
+			return $response;
+		} catch (S3Exception $e) {
+			return false;
+		}
+	}
+
 	// list buckets
 	public function list_buckets() {
 		if (!isset($this->s3))
