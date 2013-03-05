@@ -253,6 +253,7 @@ class NephilaClavata {
 	private function get_attachment_id_from_filename($attachment_file, &$medias = array()){
 		global $wpdb;
 
+		$attachment_file = preg_replace('#\.(png|gif|jpe?g)\?[^\?]*$#uism','.$1',$attachment_file);
 		$attachment_file = preg_replace('#^(.*[^/])\-[0-9]+x[0-9]+\.(png|gif|jpe?g)([\?]?.*)$#uism','$1.$2',$attachment_file);
 		if (in_array($attachment_file, $medias))
 			return false;
