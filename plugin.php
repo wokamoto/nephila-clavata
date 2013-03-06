@@ -28,10 +28,12 @@ License:
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+if ( !class_exists('S3_helper') )
+        require_once(dirname(__FILE__).'/includes/class-s3-helper.php');
 if ( !class_exists('NephilaClavataAdmin') )
 	require_once(dirname(__FILE__).'/includes/class-admin-menu.php');
-if ( !class_exists('S3_helper') )
-	require_once(dirname(__FILE__).'/includes/class-s3-helper.php');
+
+load_plugin_textdomain(NephilaClavata::TEXT_DOMAIN, false, dirname(plugin_basename(__FILE__)) . '/languages/');
 
 class NephilaClavata {
 	const META_KEY   = '_s3_media_files';
