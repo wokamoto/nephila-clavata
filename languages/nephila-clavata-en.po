@@ -50,8 +50,8 @@ msgstr "Done!"
 msgid "Error! : "
 msgstr "Error! : "
 
-msgid "The €"%s€" field is required."
-msgstr "The €"%s€" field is required."
+msgid "The \"%s\" field is required."
+msgstr "The \"%s\" field is required."
 
 # Region Name
 msgid "US_EAST_1"
