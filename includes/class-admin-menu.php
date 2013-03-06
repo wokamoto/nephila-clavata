@@ -122,7 +122,7 @@ class NephilaClavataAdmin {
 			// Update options
 			update_option(self::OPTION_KEY, $options);
 			printf(
-				'<div id="message" class="updated fade"><p><strong>%s</strong></p></div>'."€n",
+				'<div id="message" class="updated fade"><p><strong>%s</strong></p></div>'."\n",
 				empty($err_message) ? __('Done!', NephilaClavata::TEXT_DOMAIN) : $err_message
 				);
 			$this->options = $options;
@@ -151,7 +151,7 @@ class NephilaClavataAdmin {
 		<?php screen_icon(); ?>
 		<h2><?php echo esc_html( $title ); ?></h2>
 		<form method="post" action="<?php echo $this->admin_action;?>">
-		<?php echo wp_nonce_field($nonce_action, $nonce_name, true, false) . "€n"; ?>
+		<?php echo wp_nonce_field($nonce_action, $nonce_name, true, false) . "\n"; ?>
 		<table class="wp-list-table fixed"><tbody>
 		<?php foreach ($option_keys as $field => $label) { $this->input_field($field, $label, array('regions' => $regions, 'buckets' => $buckets)); } ?>
 		</tbody></table>
@@ -164,9 +164,9 @@ class NephilaClavataAdmin {
 	private function input_field($field, $label, $args = array()){
 		extract($args);
 
-		$label = sprintf('<th><label for="%1$s">%2$s</label></th>'."€n", $field, __($label, NephilaClavata::TEXT_DOMAIN));
+		$label = sprintf('<th><label for="%1$s">%2$s</label></th>'."\n", $field, __($label, NephilaClavata::TEXT_DOMAIN));
 
-		$input_field = sprintf('<td><input type="text" name="%1$s" value="%2$s" id="%1$s" size=100 /></td>'."€n", $field, esc_attr($this->options[$field]));
+		$input_field = sprintf('<td><input type="text" name="%1$s" value="%2$s" id="%1$s" size=100 /></td>'."\n", $field, esc_attr($this->options[$field]));
 		switch ($field) {
 		case 'region':
 			if ($regions && count($regions) > 0) {
@@ -197,7 +197,7 @@ class NephilaClavataAdmin {
 			break;
 		}
 
-		echo "<tr>€n{$label}{$input_field}</tr>€n";
+		echo "<tr>\n{$label}{$input_field}</tr>\n";
 	}
 
 	//**************************************************************************************
