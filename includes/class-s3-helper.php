@@ -1,5 +1,6 @@
 <?php
-require_once(dirname(__FILE__).'/aws.phar');
+if (!class_exists('Aws'))
+	require_once(dirname(__FILE__).'/aws.phar');
 
 use Aws\Common\Aws;
 use Aws\Common\Enum\Region;
