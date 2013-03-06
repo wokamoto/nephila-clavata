@@ -48,16 +48,16 @@ class WP_Function_Wrapper {
 
 			// LOCAL PART
 			// Test for invalid characters
-			if ( !preg_match( '/^[a-zA-Z0-9!#$%&¥'*+¥/=?^_`{|}~¥.-]+$/', $local ) )
+			if ( !preg_match( '/^[a-zA-Z0-9!#$%&\'*+\/=?^_`{|}~\.-]+$/', $local ) )
 				return false;
 
 			// DOMAIN PART
 			// Test for sequences of periods
-			if ( preg_match( '/¥.{2,}/', $domain ) )
+			if ( preg_match( '/\.{2,}/', $domain ) )
 				return false;
 
 			// Test for leading and trailing periods and whitespace
-			if ( trim( $domain, " ¥t¥n¥r¥0¥x0B." ) !== $domain )
+			if ( trim( $domain, " \t\n\r\0\x0B." ) !== $domain )
 				return false;
 
 			// Split the domain into subs
@@ -70,7 +70,7 @@ class WP_Function_Wrapper {
 			// Loop through each sub
 			foreach ( $subs as $sub ) {
 				// Test for leading and trailing hyphens and whitespace
-				if ( trim( $sub, " ¥t¥n¥r¥0¥x0B-" ) !== $sub )
+				if ( trim( $sub, " \t\n\r\0\x0B-" ) !== $sub )
 					return false;
 
 				// Test for invalid characters
@@ -135,7 +135,7 @@ class WP_Function_Wrapper {
 				return '';
 
 			// Don't bother if there are no specialchars - saves some processing
-			if ( ! preg_match( '/[&<>"¥']/', $string ) )
+			if ( ! preg_match( '/[&<>"\']/', $string ) )
 				return $string;
 
 			// Account for the previous behaviour of the function when the $quote_style is not an accepted value
