@@ -146,8 +146,8 @@ class NephilaClavataAdmin {
 					$input_field .= sprintf(
 						'<option value="%1$s"%2$s>%3$s</option>',
 						esc_attr($region),
-						__($region, NephilaClavata::TEXT_DOMAIN),
-						$region == $this->options[$field] ? ' selected' : '');
+						$region == $this->options[$field] ? ' selected' : '',
+						__($region, NephilaClavata::TEXT_DOMAIN));
 				}
 				$input_field .= '</select></td>';
 			}
