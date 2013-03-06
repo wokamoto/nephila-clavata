@@ -34,6 +34,13 @@ msgstr ""
 msgid "S3 URL"
 msgstr ""
 
+# Error message
+msgid "Error! : "
+msgstr ""
+
+msgid "The €"%s€" field is required."
+msgstr ""
+
 # Region Name
 msgid "US_EAST_1"
 msgstr ""

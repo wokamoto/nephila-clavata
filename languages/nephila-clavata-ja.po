@@ -4,7 +4,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-06 12:00+0900\n"
 "POT-Creation-Date: 2012-04-19 14:58+0900\n"
-"PO-Revision-Date: 2013-03-06 12:48+0900\n"
+"PO-Revision-Date: 2013-03-06 23:04+0900\n"
 "Last-Translator: wokamoto <wokamoto1973@gmail.com>\n"
 "Language-Team: JAPANESE <http://wppluginsj.sourceforge.jp/>\n"
 "MIME-Version: 1.0\n"
@@ -14,6 +14,7 @@ msgstr ""
 "X-Poedit-KeywordsList: __;_e\n"
 "X-Poedit-Basepath: .\n"
 "Language: ja_JP\n"
+"X-Generator: Poedit 1.5.5\n"
 "X-Poedit-SearchPath-0: ..\n"
 
 # Plugin Name
@@ -45,6 +46,13 @@ msgstr "S3 URL"
 
 msgid "Done!"
 msgstr "完了"
+
+# Error message
+msgid "Error! : "
+msgstr "Error! : "
+
+msgid "The \"%s\" field is required."
+msgstr "\"%s\" 項目は必須入力です。"
 
 # Region Name
 msgid "US_EAST_1"

@@ -11,13 +11,6 @@ class NephilaClavataAdmin {
 	private $options = array();
 	private $plugin_basename;
 	private $admin_hook, $admin_action;
-	private $option_keys = array(
-		'access_key' => 'AWS Access Key',
-		'secret_key' => 'AWS Secret Key',
-		'region' => 'AWS Region',
-		'bucket' => 'S3 Bucket',
-		's3_url' => 'S3 URL',
-		);
 	private $regions = array(
 		'US_EAST_1',
 		'US_WEST_1',
@@ -38,8 +31,22 @@ class NephilaClavataAdmin {
 		add_filter('plugin_action_links', array(&$this, 'plugin_setting_links'), 10, 2 );
 	}
 
+	static public function option_keys(){
+		return array(
+			'access_key' => 'AWS Access Key',
+			'secret_key' => 'AWS Secret Key',
+			'region' => 'AWS Region',
+			'bucket' => 'S3 Bucket',
+			's3_url' => 'S3 URL',
+			);
+	}
+
 	static public function get_option(){
 		$options = get_option(self::OPTION_KEY);
+		foreach (array_keys(self::option_keys()) as $key) {
+			if (!isset($options[$key]) || is_wp_error($options[$key]))
+				$options[$key] = '';
+		}
 		return $options;
 	}
 
@@ -55,11 +62,12 @@ class NephilaClavataAdmin {
 	}
 
 	public function options_page(){
-		$nonce_action = 'update_options';
-		$nonce_name   = '_wpnonce_update_options';
+		$nonce_action  = 'update_options';
+		$nonce_name    = '_wpnonce_update_options';
 
+		$option_keys   = $this->option_keys();
 		$this->options = $this->get_option();
-		$title = __( 'Nephila clavata', NephilaClavata::TEXT_DOMAIN );
+		$title = __('Nephila clavata', NephilaClavata::TEXT_DOMAIN);
 
 		$iv = new InputValidator('POST');
 		$iv->set_rules($nonce_name, 'required');
@@ -67,7 +75,7 @@ class NephilaClavataAdmin {
 		// Update options
 		if (!is_wp_error($iv->input($nonce_name)) && check_admin_referer($nonce_action, $nonce_name)) {
 			// Get posted options
-			$fields = array_keys($this->option_keys);
+			$fields = array_keys($option_keys);
 			foreach ($fields as $field) {
 				switch ($field) {
 				case 'access_key':
@@ -80,7 +88,26 @@ class NephilaClavataAdmin {
 				}
 			}
 			$options = $iv->input($fields);
-			if ((!isset($options['s3_url']) || empty($options['s3_url'])) && (isset($options['bucket']) && !empty($options['bucket']))) {
+			$err_message = '';
+			foreach ($option_keys as $key => $field) {
+				if (is_wp_error($options[$key])) {
+					$error_data = $options[$key];
+					$err = '';
+					foreach ($error_data->errors as $errors) {
+						foreach ($errors as $error) {
+							$err .= (!empty($err) ? '<br />' : '') . __('Error! : ', NephilaClavata::TEXT_DOMAIN);
+							$err .= sprintf(
+								__(str_replace($key, '%s', $error), NephilaClavata::TEXT_DOMAIN),
+								__($field, NephilaClavata::TEXT_DOMAIN)
+								);
+						}
+					}
+					$err_message .= (!empty($err_message) ? '<br />' : '') . $err;
+				}
+				if (!isset($options[$key]) || is_wp_error($options[$key]))
+					$options[$key] = '';
+			}
+			if (empty($options['s3_url']) && !empty($options['bucket'])) {
 				$options['s3_url'] = sprintf(
 					'http://%1$s.s3-website-%2$s.amazonaws.com',
 					strtolower($options['bucket']),
@@ -94,7 +121,10 @@ class NephilaClavataAdmin {
 
 			// Update options
 			update_option(self::OPTION_KEY, $options);
-			printf('<div id="message" class="updated fade"><p><strong>%s</strong></p></div>'."\n", __('Done!', NephilaClavata::TEXT_DOMAIN));
+			printf(
+				'<div id="message" class="updated fade"><p><strong>%s</strong></p></div>'."€n",
+				empty($err_message) ? __('Done!', NephilaClavata::TEXT_DOMAIN) : $err_message
+				);
 			$this->options = $options;
 			unset($options);
 		}
@@ -112,8 +142,8 @@ class NephilaClavataAdmin {
 			$buckets = $s3->list_buckets();
 		}
 		if (!$buckets) {
-			unset($this->option_keys['bucket']);
-			unset($this->option_keys['s3_url']);
+			unset($option_keys['bucket']);
+			unset($option_keys['s3_url']);
 		}
 
 ?>
@@ -121,9 +151,9 @@ class NephilaClavataAdmin {
 		<?php screen_icon(); ?>
 		<h2><?php echo esc_html( $title ); ?></h2>
 		<form method="post" action="<?php echo $this->admin_action;?>">
-		<?php echo wp_nonce_field($nonce_action, $nonce_name, true, false) . "\n"; ?>
+		<?php echo wp_nonce_field($nonce_action, $nonce_name, true, false) . "€n"; ?>
 		<table class="wp-list-table fixed"><tbody>
-		<?php foreach ($this->option_keys as $field => $label) { $this->input_field($field, $label, array('regions' => $regions, 'buckets' => $buckets)); } ?>
+		<?php foreach ($option_keys as $field => $label) { $this->input_field($field, $label, array('regions' => $regions, 'buckets' => $buckets)); } ?>
 		</tbody></table>
 		<?php submit_button(); ?>
 		</form>
@@ -134,9 +164,9 @@ class NephilaClavataAdmin {
 	private function input_field($field, $label, $args = array()){
 		extract($args);
 
-		$label = sprintf('<th><label for="%1$s">%2$s</label></th>'."\n", $field, __($label, NephilaClavata::TEXT_DOMAIN));
+		$label = sprintf('<th><label for="%1$s">%2$s</label></th>'."€n", $field, __($label, NephilaClavata::TEXT_DOMAIN));
 
-		$input_field = sprintf('<td><input type="text" name="%1$s" value="%2$s" id="%1$s" size=100 /></td>'."\n", $field, esc_attr($this->options[$field]));
+		$input_field = sprintf('<td><input type="text" name="%1$s" value="%2$s" id="%1$s" size=100 /></td>'."€n", $field, esc_attr($this->options[$field]));
 		switch ($field) {
 		case 'region':
 			if ($regions && count($regions) > 0) {
@@ -167,7 +197,7 @@ class NephilaClavataAdmin {
 			break;
 		}
 
-		echo "<tr>\n{$label}{$input_field}</tr>\n";
+		echo "<tr>€n{$label}{$input_field}</tr>€n";
 	}
 
 	//**************************************************************************************
