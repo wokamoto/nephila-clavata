@@ -4,7 +4,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-03-06 12:00+0900\n"
 "POT-Creation-Date: 2012-04-19 14:58+0900\n"
-"PO-Revision-Date: 2013-03-06 11:51+0900\n"
+"PO-Revision-Date: 2013-03-06 12:48+0900\n"
 "Last-Translator: wokamoto <wokamoto1973@gmail.com>\n"
 "Language-Team: JAPANESE <http://wppluginsj.sourceforge.jp/>\n"
 "MIME-Version: 1.0\n"
@@ -18,15 +18,15 @@ msgstr ""
 
 # Plugin Name
 msgid "Nephila clavata"
-msgstr "Nephila clavata (絡新婦)"
+msgstr "絡新婦"
 
 # description
 msgid ""
 "Media uploader for AWS S3.Allows you to mirror your WordPress media uploads "
 "over to Amazon S3 for storage and delivery."
 msgstr ""
-"Media uploader for AWS S3.Allows you to mirror your WordPress media uploads "
-"over to Amazon S3 for storage and delivery."
+"WordPress のメディアライブラリにアップロードされたファイルを自動的に Amazon "
+"S3 にアップロードして、post_content 内のリンクを S3 の URL に変更します。"
 
 msgid "AWS Access Key"
 msgstr "AWS アクセスキー ID"
