@@ -144,8 +144,9 @@ class NephilaClavataAdmin {
 				$input_field .= '<option value=""></option>';
 				foreach ($regions as $region) {
 					$input_field .= sprintf(
-						'<option value="%1$s"%2$s>%1$s</option>',
+						'<option value="%1$s"%2$s>%3$s</option>',
 						esc_attr($region),
+						__($region, NephilaClavata::TEXT_DOMAIN),
 						$region == $this->options[$field] ? ' selected' : '');
 				}
 				$input_field .= '</select></td>';

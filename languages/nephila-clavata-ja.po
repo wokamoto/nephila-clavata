@@ -1,0 +1,75 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Nephila clavata\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-03-06 12:00+0900\n"
+"POT-Creation-Date: 2012-04-19 14:58+0900\n"
+"PO-Revision-Date: 2013-03-06 11:51+0900\n"
+"Last-Translator: wokamoto <wokamoto1973@gmail.com>\n"
+"Language-Team: JAPANESE <http://wppluginsj.sourceforge.jp/>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-KeywordsList: __;_e\n"
+"X-Poedit-Basepath: .\n"
+"Language: ja_JP\n"
+"X-Poedit-SearchPath-0: ..\n"
+
+# Plugin Name
+msgid "Nephila clavata"
+msgstr "Nephila clavata (絡新婦)"
+
+# description
+msgid ""
+"Media uploader for AWS S3.Allows you to mirror your WordPress media uploads "
+"over to Amazon S3 for storage and delivery."
+msgstr ""
+"Media uploader for AWS S3.Allows you to mirror your WordPress media uploads "
+"over to Amazon S3 for storage and delivery."
+
+msgid "AWS Access Key"
+msgstr "AWS アクセスキー ID"
+
+msgid "AWS Secret Key"
+msgstr "AWS シークレットアクセスキー"
+
+msgid "AWS Region"
+msgstr "AWS リージョン"
+
+msgid "S3 Bucket"
+msgstr "S3 バケット"
+
+msgid "S3 URL"
+msgstr "S3 URL"
+
+msgid "Done!"
+msgstr "完了"
+
+# Region Name
+msgid "US_EAST_1"
+msgstr "北米 東 (北バージニア)"
+
+msgid "US_WEST_1"
+msgstr "北米 西 (北カリフォルニア)"
+
+msgid "US_WEST_2"
+msgstr "北米 西 (オレゴン)"
+
+msgid "EU_WEST_1"
+msgstr "EU (アイルランド)"
+
+msgid "AP_SOUTHEAST_1"
+msgstr "アジア太平洋 (シンガポール)"
+
+msgid "AP_SOUTHEAST_2"
+msgstr "アジア太平洋 (シドニー)"
+
+msgid "AP_NORTHEAST_1"
+msgstr "アジア太平洋 (東京)"
+
+msgid "SA_EAST_1"
+msgstr "南米 (サンパウロ)"
+
+msgid "US_GOV_WEST_1"
+msgstr "北米 (政府)"

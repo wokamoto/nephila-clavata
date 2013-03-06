@@ -1,0 +1,63 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Nephila clavata\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-03-06 12:00+0900\n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Plugin Name
+msgid "Nephila clavata"
+msgstr ""
+
+# description
+msgid "Media uploader for AWS S3.Allows you to mirror your WordPress media uploads over to Amazon S3 for storage and delivery."
+msgstr ""
+
+
+msgid "AWS Access Key"
+msgstr ""
+
+msgid "AWS Secret Key"
+msgstr ""
+
+msgid "AWS Region"
+msgstr ""
+
+msgid "S3 Bucket"
+msgstr ""
+
+msgid "S3 URL"
+msgstr ""
+
+# Region Name
+msgid "US_EAST_1"
+msgstr ""
+
+msgid "US_WEST_1"
+msgstr ""
+
+msgid "US_WEST_2"
+msgstr ""
+
+msgid "EU_WEST_1"
+msgstr ""
+
+msgid "AP_SOUTHEAST_1"
+msgstr ""
+
+msgid "AP_SOUTHEAST_2"
+msgstr ""
+
+msgid "AP_NORTHEAST_1"
+msgstr ""
+
+msgid "SA_EAST_1"
+msgstr ""
+
+msgid "US_GOV_WEST_1"
+msgstr ""
