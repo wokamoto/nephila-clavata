@@ -33,11 +33,11 @@ class NephilaClavataAdmin {
 
 	static public function option_keys(){
 		return array(
-			'access_key' => 'AWS Access Key',
-			'secret_key' => 'AWS Secret Key',
-			'region' => 'AWS Region',
-			'bucket' => 'S3 Bucket',
-			's3_url' => 'S3 URL',
+			'access_key' => __('AWS Access Key',  NephilaClavata::TEXT_DOMAIN),
+			'secret_key' => __('AWS Secret Key',  NephilaClavata::TEXT_DOMAIN),
+			'region'     => __('AWS Region',  NephilaClavata::TEXT_DOMAIN),
+			'bucket'     => __('S3 Bucket',  NephilaClavata::TEXT_DOMAIN),
+			's3_url'     => __('S3 URL', NephilaClavata::TEXT_DOMAIN),
 			);
 	}
 
@@ -56,7 +56,7 @@ class NephilaClavataAdmin {
 	public function admin_menu() {
 		global $wp_version;
 
-		$title = __( 'Nephila clavata', NephilaClavata::TEXT_DOMAIN );
+		$title = __('Nephila clavata', NephilaClavata::TEXT_DOMAIN);
 		$this->admin_hook = add_options_page($title, $title, 'manage_options', self::OPTION_PAGE, array(&$this, 'options_page'));
 		$this->admin_action = admin_url('/options-general.php') . '?page=' . self::OPTION_PAGE;
 	}
@@ -98,7 +98,7 @@ class NephilaClavataAdmin {
 							$err .= (!empty($err) ? '<br />' : '') . __('Error! : ', NephilaClavata::TEXT_DOMAIN);
 							$err .= sprintf(
 								__(str_replace($key, '%s', $error), NephilaClavata::TEXT_DOMAIN),
-								__($field, NephilaClavata::TEXT_DOMAIN)
+								$field
 								);
 						}
 					}
@@ -164,7 +164,7 @@ class NephilaClavataAdmin {
 	private function input_field($field, $label, $args = array()){
 		extract($args);
 
-		$label = sprintf('<th><label for="%1$s">%2$s</label></th>'."\n", $field, __($label, NephilaClavata::TEXT_DOMAIN));
+		$label = sprintf('<th><label for="%1$s">%2$s</label></th>'."\n", $field, $label);
 
 		$input_field = sprintf('<td><input type="text" name="%1$s" value="%2$s" id="%1$s" size=100 /></td>'."\n", $field, esc_attr($this->options[$field]));
 		switch ($field) {
