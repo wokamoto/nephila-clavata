@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Nephila clavata
-Version: 0.1.3
+Version: 0.1.4
 Plugin URI: https://github.com/wokamoto/nephila-clavata
 Description: Media uploader for AWS S3.Allows you to mirror your WordPress media uploads over to Amazon S3 for storage and delivery. 
 Author: wokamoto
@@ -331,34 +331,28 @@ class NephilaClavata {
 
 	// Get post attachments from post content
 	private function get_post_attachments_from_content($content, &$attachments_count, &$medias) {
+		$attachments = array();
 		$upload_dir = wp_upload_dir();
 
-		$attachments = array();
-		$pattern = '#(<a [^>]*href=[\'"])'.preg_quote($upload_dir['baseurl']).'/([^\'"]*)([\'"][^>]*><img [^>]*></a>)#uism';
-		if (preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
-			foreach ($matches as $match) {
-				if ($attachments_count > self::LIMIT)
-					break;
-				if ($attachment = $this->get_attachment_from_filename($match[2], $medias)) {
-					$attachments[] = $attachment;
-					$attachments_count++;
-				}
-			}
-		}
-		unset($matches);
+		$img_src_pattern = array(
+			'#<a [^>]*href=[\'"]'.preg_quote($upload_dir['baseurl']).'/([^\'"]*)[\'"][^>]*><img [^>]*></a>#ism',
+			'#<img [^>]*src=[\'"]'.preg_quote($upload_dir['baseurl']).'/([^\'"]*)[\'"][^>]*>#ism',
+			);
+		$img_src_pattern = (array)apply_filters('NephilaClavata/img_src_pattern', $img_src_pattern);
 
-		$pattern = '#(<img [^>]*src=[\'"])'.preg_quote($upload_dir['baseurl']).'/([^\'"]*)([\'"][^>]*>)#uism';
-		if (preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
-			foreach ($matches as $match) {
-				if ($attachments_count > self::LIMIT)
-					break;
-				if ($attachment = $this->get_attachment_from_filename($match[2], $medias)) {
-					$attachments[] = $attachment;
-					$attachments_count++;
+		foreach ($img_src_pattern as $pattern) {
+			if (preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
+				foreach ($matches as $match) {
+					if ($attachments_count > self::LIMIT)
+						break;
+					if ($attachment = $this->get_attachment_from_filename($match[1], $medias)) {
+						$attachments[] = $attachment;
+						$attachments_count++;
+					}
 				}
 			}
+			unset($matches);
 		}
-		unset($matches);
 
 		return count($attachments) > 0 ? $attachments : array();
 	}
