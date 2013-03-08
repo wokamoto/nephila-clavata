@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=9S8AJ
 Tags: admin, amazon, aws, media, mirror, s3, uploads
 Requires at least: 3.5
 Tested up to: 3.5.1
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 
 Allows you to mirror your WordPress media uploads over to Amazon S3 for storage and delivery.
 
@@ -26,7 +26,7 @@ If you have translated into your language, please let me know.
 1. Upload the entire `nephila-clavata` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the 'Plugins' menu in WordPress.
 
-The control panel of Head Cleaner is in 'Settings > Nephila clavata'.
+The control panel of Nephila clavata is in 'Settings > Nephila clavata'.
 
 **PHP libraries are using [AWS SDK for PHP 2](http://aws.amazon.com/sdkforphp2/ "AWS SDK for PHP 2"). PHP5.3 or later Required.**
 
