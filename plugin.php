@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Nephila clavata
-Version: 0.1.1
+Version: 0.1.2
 Plugin URI: https://github.com/wokamoto/nephila-clavata
 Description: Media uploader for AWS S3.Allows you to mirror your WordPress media uploads over to Amazon S3 for storage and delivery. 
 Author: wokamoto
@@ -36,10 +36,10 @@ if ( !class_exists('NephilaClavataAdmin') )
 load_plugin_textdomain(NephilaClavata::TEXT_DOMAIN, false, dirname(plugin_basename(__FILE__)) . '/languages/');
 
 class NephilaClavata {
-	const META_KEY   = '_s3_media_files';
-	const DEBUG_MODE = true;
+	const META_KEY    = '_s3_media_files';
+	const DEBUG_MODE  = false;
 	const TEXT_DOMAIN = 'nephila-clavata';
-	const LIMIT = 100;
+	const LIMIT       = 100;
 
 	private $s3;                // S3 Object
 	private $options = array(); // this plugin options
@@ -58,27 +58,6 @@ class NephilaClavata {
 
 	static public function plugin_basename() {
 		return plugin_basename(__FILE__);
-	}
-
-	// delete_attachment action hook
-	public function delete_attachment($post_id){
-		$post = get_post($post_id);
-		if ($post->post_type !== 'attachment')
-			return;
-
-		if ($all_S3_medias = get_post_meta($post_id, self::META_KEY, true)){
-			$s3 = $this->s3_init();
-			foreach ($all_S3_medias as $S3_bucket => $S3_medias) {
-				if ($s3->current_bucket() !== $S3_bucket)
-					$s3->set_current_bucket($S3_bucket);
-				foreach ($S3_medias as $S3_media) {
-					if (!$s3->object_exists($S3_media['s3_key']))
-						continue;
-					$delete_result = $s3->delete($S3_media['s3_key']);
-				}
-			}
-		}
-		unset($all_S3_medias);
 	}
 
 	// the_content filter hook
@@ -119,6 +98,22 @@ class NephilaClavata {
 		return $url;
 	}
 
+	// delete_attachment action hook
+	public function delete_attachment($post_id){
+		$post = get_post($post_id);
+		if ($post->post_type !== 'attachment')
+			return;
+
+		if ($all_S3_medias = get_post_meta($post_id, self::META_KEY, true)){
+			foreach ($all_S3_medias as $S3_bucket => $S3_medias) {
+				foreach ($S3_medias as $S3_media) {
+					$this->s3_delete($S3_bucket, $S3_media['s3_key']);
+				}
+			}
+		}
+		unset($all_S3_medias);
+	}
+
 	// Replace URL
 	private function replace_s3_url($content, $post_id){
 		global $pagenow;
@@ -131,6 +126,7 @@ class NephilaClavata {
 		if (!$s3_bucket || !$s3_url)
 			return $content;
 
+		// get attachments
 		$attachment_meta_key = self::META_KEY;
 		$post_meta_key = self::META_KEY.'-replace';
 		if ($post_id) {
@@ -161,6 +157,7 @@ class NephilaClavata {
 			}
 		}
 
+		// object upload to S3, and replace url
 		$replace_count = 0;
 		$replace_data = array();
 		$attachments_meta = array();
@@ -173,7 +170,6 @@ class NephilaClavata {
 			} else {
 				$S3_medias_old = array();
 			}
-
 			if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
 				dbgx_trace_var($S3_medias_new);
 				dbgx_trace_var($S3_medias_old);
@@ -186,7 +182,7 @@ class NephilaClavata {
 					$search_url  = $val['url'];
 					$replace_url = $s3_url . $val['s3_key'];
 					if (!isset($S3_medias_old[$size])) {
-						$result = $this->s3_upload($val['file'], $val['s3_key']);
+						$result = $this->s3_upload($val['file'], $s3_bucket, $val['s3_key']);
 						$replace_flag = !$result ? false : true;
 						if (self::DEBUG_MODE && function_exists('dbgx_trace_var'))
 							dbgx_trace_var($result);
@@ -231,43 +227,56 @@ class NephilaClavata {
 	}
 
 	// Initializing S3 object
-	private function s3_init(){
-		if (isset($this->s3))
+	private function s3($S3_bucket = null){
+		if (isset($this->s3)) {
+			if (isset($S3_bucket) && $this->s3->current_bucket() !== $S3_bucket)
+				$this->s3->set_current_bucket($S3_bucket);
 			return $this->s3;
+		}
 		if ($this->options) {
 			$s3 = new S3_helper(
 				isset($this->options['access_key']) ? $this->options['access_key'] : null,
 				isset($this->options['secret_key']) ? $this->options['secret_key'] : null,
-				isset($this->options['region']) ? $this->options['region'] : null
+				isset($this->options['region'])     ? $this->options['region']     : null
 				);
-			if ($s3) {
-				$s3_bucket = isset($this->options['bucket']) ? $this->options['bucket'] : null;
-				$s3->set_option(array('Bucket' => $s3_bucket));
-			}
+			if ($s3 && isset($S3_bucket))
+				$s3->set_current_bucket($S3_bucket);
 			$this->s3 = $s3;
 			return $s3;
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	// Upload file to S3
-	private function s3_upload($filename, $s3_key){
+	private function s3_upload($filename, $S3_bucket, $S3_key){
 		if (!file_exists($filename))
 			return false;
 
-		$s3 = $this->s3_init();
-		if ( $s3 !== false) {
-			if ($s3->object_exists($s3_key))
+		$upload_result = false;
+		if ($s3 = $this->s3($S3_bucket)) {
+			if ($s3->object_exists($S3_key))
 				return true;
-			$upload_result = $s3->upload($filename, $s3_key);
+			$upload_result = $s3->upload($filename, $S3_key);
 			if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
 				dbgx_trace_var($upload_result);
 			}
-			return $upload_result;
-		} else {
-			return false;
 		}
+		return $upload_result;
+	}
+
+	// Delete S3 object
+	private function s3_delete($S3_bucket, $S3_key){
+		$delete_result = false;
+		if ($s3 = $this->s3($S3_bucket)) {
+			$delete_result =
+				$s3->object_exists($S3_key)
+				? $s3->delete($S3_key)
+				: true;
+			if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
+				dbgx_trace_var($delete_result);
+			}
+		}
+		return $delete_result;
 	}
 
 	// Get post attachments
@@ -286,7 +295,7 @@ class NephilaClavata {
 		}
 
 		$attachments_count = 0;
-		if ( !isset($post_meta[$post_id])) {
+		if (!isset($post_meta[$post_id])) {
 			if ($post_type === 'attachment') {
 				$attachments = array(0 => $post);
 				$attachments_count++;
@@ -326,7 +335,7 @@ class NephilaClavata {
 
 		$attachments = array();
 		$pattern = '#(<a [^>]*href=[\'"])'.preg_quote($upload_dir['baseurl']).'/([^\'"]*)([\'"][^>]*><img [^>]*></a>)#uism';
-		if ( preg_match_all($pattern, $content, $matches, PREG_SET_ORDER) ) {
+		if (preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
 			foreach ($matches as $match) {
 				if ($attachments_count > self::LIMIT)
 					break;
@@ -339,7 +348,7 @@ class NephilaClavata {
 		unset($matches);
 
 		$pattern = '#(<img [^>]*src=[\'"])'.preg_quote($upload_dir['baseurl']).'/([^\'"]*)([\'"][^>]*>)#uism';
-		if ( preg_match_all($pattern, $content, $matches, PREG_SET_ORDER) ) {
+		if (preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
 			foreach ($matches as $match) {
 				if ($attachments_count > self::LIMIT)
 					break;
