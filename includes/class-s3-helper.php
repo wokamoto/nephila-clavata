@@ -24,7 +24,7 @@ class S3_helper {
 	// get S3 object
 	public function init_s3($access_key, $secret_key, $region = null){
 		if ( !isset($region) )
-			$resion = Region::AP_NORTHEAST_1;
+			$region = Region::AP_NORTHEAST_1;
 		$s3 = Aws::factory(array(
 			'key' => $access_key,
 			'secret' => $secret_key,

@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=9S8AJ
 Tags: admin, amazon, aws, media, mirror, s3, uploads
 Requires at least: 3.5
 Tested up to: 3.5.1
-Stable tag: 0.1.5
+Stable tag: 0.1.6
 
 Allows you to mirror your WordPress media uploads over to Amazon S3 for storage and delivery.
 
@@ -39,6 +39,9 @@ none
 1. The admin page
 
 == Changelog == 
+
+**0.1.6 - May 8, 2013
+Added uninstall script.
 
 **0.1.2 - March 8, 2013**  
 Some fix.
