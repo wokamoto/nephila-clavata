@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Nephila clavata
-Version: 0.1.7
+Version: 0.1.8
 Plugin URI: https://github.com/wokamoto/nephila-clavata
 Description: Media uploader for AWS S3.Allows you to mirror your WordPress media uploads over to Amazon S3 for storage and delivery. 
 Author: wokamoto
@@ -363,9 +363,13 @@ class NephilaClavata {
 	private function get_attachment_from_filename($attachment_file, &$medias = array()){
 		global $wpdb;
 
+		if (!isset($medias))
+			$medias = array();
+		if (!is_array($medias))
+			$medias = (array)$medias;
 		$attachment_file = preg_replace('#\.(png|gif|jpe?g)\?[^\?]*$#uism','.$1',$attachment_file);
 		$attachment_file = preg_replace('#^(.*[^/])\-[0-9]+x[0-9]+\.(png|gif|jpe?g)([\?]?.*)$#uism','$1.$2',$attachment_file);
-		if ($attachment_file && in_array($attachment_file, (array)$medias))
+		if ($attachment_file && in_array($attachment_file, $medias))
 			return false;
 
 		$medias[] = $attachment_file;
