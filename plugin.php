@@ -38,7 +38,7 @@ if ( !class_exists('NephilaClavata') )
 load_plugin_textdomain(NephilaClavata::TEXT_DOMAIN, false, dirname(plugin_basename(__FILE__)) . '/languages/');
 
 // Go Go Go!
-$nephila_clavata = new NephilaClavata(plugin_basename(__FILE__), NephilaClavata_Admin::get_option());
+$nephila_clavata = new NephilaClavata(NephilaClavata_Admin::get_option());
 
 // replace url
 add_filter('the_content', array($nephila_clavata, 'the_content'));

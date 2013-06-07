@@ -112,7 +112,7 @@ class NephilaClavata_Admin {
 					strtolower(str_replace('_','-',$options['region']))
 					);
 			}
-			if ( !preg_match('#^https?://#i', $options['s3_url']) ) {
+			if ( !empty($options['s3_url']) && !preg_match('#^https?://#i', $options['s3_url']) ) {
 				$options['s3_url'] = 'http://' . preg_replace('#^//?#', '', $options['s3_url']);
 			}
 			$options['s3_url'] = untrailingslashit($options['s3_url']);
