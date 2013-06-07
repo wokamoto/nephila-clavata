@@ -1,10 +1,8 @@
 <?php
 if ( !class_exists('InputValidator') )
-	require_once(dirname(__FILE__).'/class-InputValidator.php');
-if ( !class_exists('S3_helper') )
-	require_once(dirname(__FILE__).'/class-s3-helper.php');
+	require(dirname(__FILE__).'/class-InputValidator.php');
 
-class NephilaClavataAdmin {
+class NephilaClavata_Admin {
 	const OPTION_KEY  = 'nephila_clavata';
 	const OPTION_PAGE = 'nephila-clavata';
 
@@ -114,18 +112,32 @@ class NephilaClavataAdmin {
 					strtolower(str_replace('_','-',$options['region']))
 					);
 			}
+			if ( !preg_match('#^https?://#i', $options['s3_url']) ) {
+				$options['s3_url'] = 'http://' . preg_replace('#^//?#', '', $options['s3_url']);
+			}
 			$options['s3_url'] = untrailingslashit($options['s3_url']);
 			if (NephilaClavata::DEBUG_MODE && function_exists('dbgx_trace_var')) {
 				dbgx_trace_var($options);
 			}
 
 			// Update options
-			update_option(self::OPTION_KEY, $options);
-			printf(
-				'<div id="message" class="updated fade"><p><strong>%s</strong></p></div>'."\n",
-				empty($err_message) ? __('Done!', NephilaClavata::TEXT_DOMAIN) : $err_message
-				);
-			$this->options = $options;
+			if ($this->options !== $options) {
+				update_option(self::OPTION_KEY, $options);
+				if ($this->options['s3_url'] !== $options['s3_url']) {
+					global $wpdb;
+					$sql = $wpdb->prepare(
+						"delete from {$wpdb->postmeta} where meta_key in (%s, %s)",
+						NephilaClavata::META_KEY,
+						NephilaClavata::META_KEY.'-replace'
+						);
+					$wpdb->query($sql);
+				}
+				printf(
+					'<div id="message" class="updated fade"><p><strong>%s</strong></p></div>'."\n",
+					empty($err_message) ? __('Done!', NephilaClavata::TEXT_DOMAIN) : $err_message
+					);
+				$this->options = $options;
+			}
 			unset($options);
 		}
 
