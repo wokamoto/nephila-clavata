@@ -83,6 +83,30 @@ class S3_helper {
 		}
 	}
 
+	// S3 Download
+	public function download($key, $download_path = null, $bucket = null) {
+		if (!$this->s3)
+			return false;
+
+		try {
+			if (!$download_path)
+				$download_path = dirname(__FILE__).'/'.basename($key);
+			$args = array_merge($this->options, array(
+				'Key'         => $key,
+				));
+			if (isset($bucket))
+				$args['Bucket'] = $bucket;
+			if (!isset($args['Bucket']))
+				return false;
+			$response = $this->s3->getObject($args);
+			$response['Body']->rewind();
+			file_put_contents($download_path, $response['Body']->read($response['ContentLength']));
+			return $response;
+		} catch (S3Exception $e) {
+			return false;
+		}
+	}
+
 	// S3 Delete
 	public function delete($upload_path, $bucket = null) {
 		if (!$this->s3)

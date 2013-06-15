@@ -152,6 +152,9 @@ class NephilaClavata {
 							$content = str_replace($search_url, $replace_url, $content);
 						}
 					}
+
+					if (!file_exists($val['file']))
+						$this->s3_download($val['file'], $s3_bucket, $val['s3_key']);
 				}
 				if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
 					dbgx_trace_var($S3_medias);
@@ -166,6 +169,8 @@ class NephilaClavata {
 						$replace_data[$search_url] = $replace_url;
 						$content = str_replace($search_url, $replace_url, $content);
 					}
+					if (!file_exists($val['file']))
+						$this->s3_download($val['file'], $s3_bucket, $val['s3_key']);
 				}
 			}
 			$replace_count++;
@@ -220,6 +225,20 @@ class NephilaClavata {
 			}
 		}
 		return $upload_result;
+	}
+
+	// Download file to S3
+	private function s3_download($filename, $S3_bucket, $S3_key){
+		$download_result = false;
+		if ($s3 = $this->s3($S3_bucket)) {
+			if (!$s3->object_exists($S3_key))
+				return false;
+			$download_result = $s3->download($S3_key, $filename);
+			if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
+				dbgx_trace_var($download_result);
+			}
+		}
+		return $download_result;
 	}
 
 	// Delete S3 object
