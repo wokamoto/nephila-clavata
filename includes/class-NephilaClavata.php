@@ -8,7 +8,11 @@ class NephilaClavata {
 	private $s3;                // S3 Object
 	private $options = array(); // this plugin options
 
+	static $instance;
+
 	function __construct($options){
+		self::$instance = $this;
+
 		$this->options = $options;
 	}
 
@@ -20,18 +24,18 @@ class NephilaClavata {
 	public function the_content($content){
 		$post_id = intval(get_the_ID());
 
-		remove_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
+		remove_filter('wp_get_attachment_url', array($this, 'get_attachment_url'), 10, 2);
 		$content = $this->replace_s3_url($content, $post_id);
-		add_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
+		add_filter('wp_get_attachment_url', array($this, 'get_attachment_url'), 10, 2);
 
 		return $content;
 	}
 
 	// widget_text filter hook
 	public function widget_text($content){
-		remove_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
+		remove_filter('wp_get_attachment_url', array($this, 'get_attachment_url'), 10, 2);
 		$content = $this->replace_s3_url($content, false);
-		add_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
+		add_filter('wp_get_attachment_url', array($this, 'get_attachment_url'), 10, 2);
 
 		return $content;
 	}
@@ -46,9 +50,9 @@ class NephilaClavata {
 		if (isset($urls[$post_id]))
 			return $urls[$post_id];
 
-		remove_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
+		remove_filter('wp_get_attachment_url', array($this, 'get_attachment_url'), 10, 2);
 		$url = $this->replace_s3_url($url, $post_id);
-		add_filter('wp_get_attachment_url', array(&$this, 'get_attachment_url'), 10, 2);
+		add_filter('wp_get_attachment_url', array($this, 'get_attachment_url'), 10, 2);
 
 		$urls[$post_id] = $url;
 		return $url;

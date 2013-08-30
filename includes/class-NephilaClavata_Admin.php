@@ -21,12 +21,16 @@ class NephilaClavata_Admin {
 		'US_GOV_WEST_1'
 		);
 
+	static $instance;
+
 	function __construct(){
+		self::$instance = $this;
+
 		$this->options = $this->get_option();
 		$this->plugin_basename = NephilaClavata::plugin_basename();
 
-		add_action('admin_menu', array(&$this, 'admin_menu'));
-		add_filter('plugin_action_links', array(&$this, 'plugin_setting_links'), 10, 2 );
+		add_action('admin_menu', array($this, 'admin_menu'));
+		add_filter('plugin_action_links', array($this, 'plugin_setting_links'), 10, 2 );
 	}
 
 	static public function option_keys(){
@@ -55,7 +59,7 @@ class NephilaClavata_Admin {
 		global $wp_version;
 
 		$title = __('Nephila clavata', NephilaClavata::TEXT_DOMAIN);
-		$this->admin_hook = add_options_page($title, $title, 'manage_options', self::OPTION_PAGE, array(&$this, 'options_page'));
+		$this->admin_hook = add_options_page($title, $title, 'manage_options', self::OPTION_PAGE, array($this, 'options_page'));
 		$this->admin_action = admin_url('/options-general.php') . '?page=' . self::OPTION_PAGE;
 	}
 
