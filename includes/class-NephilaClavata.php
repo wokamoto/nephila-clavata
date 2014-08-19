@@ -1,19 +1,40 @@
 <?php
 class NephilaClavata {
+	private static $instance;
+	private static $options; // this plugin options
+	private static $s3;                // S3 Object
+
 	const META_KEY    = '_s3_media_files';
 	const DEBUG_MODE  = false;
 	const TEXT_DOMAIN = 'nephila-clavata';
 	const LIMIT       = 100;
 
-	private $s3;                // S3 Object
-	private $options = array(); // this plugin options
+	private function __construct() {}
 
-	static $instance;
+	public static function get_instance() {
+		if( !isset( self::$instance ) ) {
+			$c = __CLASS__;
+			self::$instance = new $c();    
+		}
 
-	function __construct($options){
-		self::$instance = $this;
+		return self::$instance;
+	}
 
-		$this->options = $options;
+	public function init($options){
+		self::$options = $options;
+	}
+
+	public function add_hook(){
+		// replace url
+		add_filter('the_content', array($this, 'the_content'));
+		add_filter('widget_text', array($this, 'widget_text'));
+		add_filter('wp_get_attachment_url', array($this, 'get_attachment_url'), 10, 2);
+
+		// update S3 object
+		add_action('edit_attachment', array($this, 'edit_attachment'));
+		add_action('add_attachment', array($this, 'add_attachment'));
+		// delete S3 object
+		add_action('delete_attachment', array($this, 'delete_attachment'));
 	}
 
 	static public function plugin_basename() {
@@ -58,6 +79,58 @@ class NephilaClavata {
 		return $url;
 	}
 
+	public function edit_attachment($attachment_id){
+		return $this->add_attachment($attachment_id, true);
+	}
+
+	public function add_attachment($attachment_id, $force = false){
+		$post = get_post($attachment_id);
+		if ($post->post_type !== 'attachment')
+			return;
+
+		$attachment_meta_key = self::META_KEY;
+		$s3_bucket = isset(self::$options['bucket']) ? self::$options['bucket'] : false;
+		$s3_url = isset(self::$options['s3_url']) ? self::$options['s3_url'] : false;
+
+		// object upload to S3
+		if ( !$force ) {
+			$S3_medias_new = $this->get_s3_media_info($attachment_id);
+			$S3_medias_old = get_post_meta($attachment_id, $attachment_meta_key, true);
+			if (is_array($S3_medias_old)) {
+				if (isset($S3_medias_old[$s3_bucket]))
+					$S3_medias_old = (array)$S3_medias_old[$s3_bucket];
+			} else {
+				$S3_medias_old = array();
+			}
+		} else {
+			$S3_medias_new = $this->get_s3_media_info($post_id);
+			$S3_medias_old = array();
+		}
+
+		if ($force || $S3_medias_new !== $S3_medias_old) {
+			$S3_medias = array();
+			foreach($S3_medias_new as $size => $val ) {
+				if ($force || !isset($S3_medias_old[$size])) {
+					$result = $this->s3_upload($val['file'], $s3_bucket, $val['s3_key']);
+					$S3_medias[$size] = $val;
+				}
+				if (!file_exists($val['file'])) {
+					$this->s3_download($val['file'], $s3_bucket, $val['s3_key']);
+				}
+			}
+
+			$S3_medias_old = get_post_meta($attachment_id, $attachment_meta_key, true);
+			if (is_array($S3_medias_old)) {
+				$S3_medias_old[$s3_bucket] = $S3_medias;
+				$S3_medias = $S3_medias_old;
+			} else {
+				$S3_medias = array($s3_bucket => $S3_medias);
+			}
+
+			update_post_meta($attachment_id, $attachment_meta_key, $S3_medias);
+		}
+	}
+
 	// delete_attachment action hook
 	public function delete_attachment($post_id){
 		$post = get_post($post_id);
@@ -81,8 +154,8 @@ class NephilaClavata {
 		if (empty($content))
 			return $content;
 
-		$s3_bucket = isset($this->options['bucket']) ? $this->options['bucket'] : false;
-		$s3_url = isset($this->options['s3_url']) ? $this->options['s3_url'] : false;
+		$s3_bucket = isset(self::$options['bucket']) ? self::$options['bucket'] : false;
+		$s3_url = isset(self::$options['s3_url']) ? self::$options['s3_url'] : false;
 		if (!$s3_bucket || !$s3_url)
 			return $content;
 
@@ -195,20 +268,21 @@ class NephilaClavata {
 
 	// Initializing S3 object
 	private function s3($S3_bucket = null){
-		if (isset($this->s3)) {
-			if (isset($S3_bucket) && $this->s3->current_bucket() !== $S3_bucket)
-				$this->s3->set_current_bucket($S3_bucket);
-			return $this->s3;
+		if (isset(self::$s3)) {
+			if (isset($S3_bucket) && self::$s3->current_bucket() !== $S3_bucket)
+				self::$s3->set_current_bucket($S3_bucket);
+			return self::$s3;
 		}
-		if ($this->options) {
-			$s3 = new S3_helper(
-				isset($this->options['access_key']) ? $this->options['access_key'] : null,
-				isset($this->options['secret_key']) ? $this->options['secret_key'] : null,
-				isset($this->options['region'])     ? $this->options['region']     : null
+		if (self::$options) {
+			$s3 = S3_helper::get_instance();
+			$s3->init(
+				isset(self::$options['access_key']) ? self::$options['access_key'] : null,
+				isset(self::$options['secret_key']) ? self::$options['secret_key'] : null,
+				isset(self::$options['region'])     ? self::$options['region']     : null
 				);
 			if ($s3 && isset($S3_bucket))
 				$s3->set_current_bucket($S3_bucket);
-			$this->s3 = $s3;
+			self::$s3 = $s3;
 			return $s3;
 		}
 		return false;
@@ -224,9 +298,6 @@ class NephilaClavata {
 			if ($s3->object_exists($S3_key))
 				return true;
 			$upload_result = $s3->upload($filename, $S3_key);
-			if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
-				dbgx_trace_var($upload_result);
-			}
 		}
 		return $upload_result;
 	}
@@ -238,9 +309,6 @@ class NephilaClavata {
 			if (!$s3->object_exists($S3_key))
 				return false;
 			$download_result = $s3->download($S3_key, $filename);
-			if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
-				dbgx_trace_var($download_result);
-			}
 		}
 		return $download_result;
 	}
@@ -253,15 +321,12 @@ class NephilaClavata {
 				$s3->object_exists($S3_key)
 				? $s3->delete($S3_key)
 				: true;
-			if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
-				dbgx_trace_var($delete_result);
-			}
 		}
 		return $delete_result;
 	}
 
 	// Get post attachments
-	private function get_post_attachments($post, $content) {
+	private function get_post_attachments($post, $content = false) {
 		static $post_meta = array();
 
 		if (is_numeric($post)) {
@@ -275,37 +340,34 @@ class NephilaClavata {
 			return false;
 		}
 
+		$attachments = array();
 		$attachments_count = 0;
-		if (!isset($post_meta[$post_id])) {
-			if ($post_type === 'attachment') {
-				$attachments = array(0 => $post);
-				$attachments_count++;
+		if ($post_type === 'attachment') {
+			$attachments[] = $post;
+			$attachments_count = 1;
+		} else {
+			// Get post attachments from media library
+			$medias = array();
+			if ($attachments = get_posts(array('post_type' => 'attachment', 'post_parent' => $post_id))) {
+				$upload_dir = wp_upload_dir();
+				foreach($attachments as $attachment) {
+					$attachment_file = str_replace($upload_dir['baseurl'].'/', '', $attachment->guid);
+					$medias[] = $attachment_file;
+				}
 			} else {
-				// Get post attachments from media library
-				if ($attachments = get_posts(array('post_type' => 'attachment', 'post_parent' => $post_id))) {
-					$medias = array();
-					$upload_dir = wp_upload_dir();
-					foreach($attachments as $attachment) {
-						$attachment_file = str_replace($upload_dir['baseurl'].'/', '', $attachment->guid);
-						$medias[] = $attachment_file;
-						$attachments_count++;
-					}
-				} else {
-					$attachments = array();
-				}
+				$attachments = array();
+			}
 
-				// Get post attachments from post content
+			// Get post attachments from post content
+			if ($content) {
 				$wk_attachments = $this->get_post_attachments_from_content($content, $attachments_count, $medias);
-				if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
-					dbgx_trace_var($attachments);
-					dbgx_trace_var($wk_attachments);
-				}
 				$attachments = array_merge($attachments, $wk_attachments);
-				unset($medias);
 				unset($wk_attachments);
 			}
-			$post_meta[$post_id] = $attachments_count > 0 ? $attachments : false;
+			unset($medias);
+			$attachments_count = count($attachments);
 		}
+		$post_meta[$post_id] = $attachments_count > 0 ? $attachments : false;
 
 		return $post_meta[$post_id];
 	}
@@ -369,17 +431,24 @@ class NephilaClavata {
 
 	// Get media file info
 	private function get_s3_media_info($attachment_id) {
-		$sizes = $this->get_attachment_sizes($attachment_id);
-		$images = array();
-		foreach ($sizes as $size) {
-			$home_path = function_exists('get_home_path') ? get_home_path() : ABSPATH;
-			$image_src = wp_get_attachment_image_src($attachment_id, $size);
-			$images[$size] = array(
-				'url'    => $image_src[0],
-				'file'   => str_replace(site_url('/'), $home_path, $image_src[0]),
-				's3_key' => preg_replace('#https?://[^/]*/#i', '/', $image_src[0]),
-			);
-		}
-		return $images;
+        $sizes = $this->get_attachment_sizes($attachment_id);
+        $images = array();
+        foreach ($sizes as $size) {
+            $home_path = function_exists('get_home_path') ? get_home_path() : ABSPATH;
+            if ( $image_src = wp_get_attachment_image_src($attachment_id, $size) ) {
+                $images[$size] = array(
+                    'url'    => $image_src[0],
+                    'file'   => str_replace(site_url('/'), $home_path, $image_src[0]),
+                    's3_key' => preg_replace('#https?://[^/]*/#i', '/', $image_src[0]),
+                );
+            } elseif ($attachment_url = wp_get_attachment_url($attachment_id, $size) ) {
+                $images[$size] = array(
+                    'url'    => $attachment_url,
+                    'file'   => str_replace(site_url('/'), $home_path, $attachment_url),
+                    's3_key' => preg_replace('#https?://[^/]*/#i', '/', $attachment_url),
+                );
+            }
+        }
+        return $images;
 	}
 }

@@ -8,14 +8,28 @@ use Aws\S3\Exception\S3Exception;
 use Guzzle\Http\EntityBody;
 
 class S3_helper {
+	private static $instance;
+
 	private $s3;
+
 	private $options = array(
 		'Bucket' => '',
 		'StorageClass' => 'STANDARD',
 		'ACL' => CannedAcl::PUBLIC_READ,
 		);
 
-	function __construct($access_key = null, $secret_key = null, $region = null) {
+	private function __construct() {}
+
+	public static function get_instance() {
+		if( !isset( self::$instance ) ) {
+			$c = __CLASS__;
+			self::$instance = new $c();    
+		}
+
+		return self::$instance;
+	}
+
+	public function init($access_key = null, $secret_key = null, $region = null) {
 		if ($access_key && $secret_key) {
 			$this->init_s3($access_key, $secret_key, $region);
 		}

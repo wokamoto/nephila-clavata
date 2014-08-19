@@ -3,10 +3,12 @@ if ( !class_exists('InputValidator') )
 	require(dirname(__FILE__).'/class-InputValidator.php');
 
 class NephilaClavata_Admin {
+	private static $instance;
+	private static $options;
+
 	const OPTION_KEY  = 'nephila_clavata';
 	const OPTION_PAGE = 'nephila-clavata';
 
-	private $options = array();
 	private $plugin_basename;
 	private $admin_hook, $admin_action;
 	private $regions = array(
@@ -21,14 +23,23 @@ class NephilaClavata_Admin {
 		'US_GOV_WEST_1'
 		);
 
-	static $instance;
+	private function __construct() {}
 
-	function __construct(){
-		self::$instance = $this;
+	public static function get_instance() {
+		if( !isset( self::$instance ) ) {
+			$c = __CLASS__;
+			self::$instance = new $c();    
+		}
 
-		$this->options = $this->get_option();
+		return self::$instance;
+	}
+
+	public function init(){
+		self::$options = $this->get_option();
 		$this->plugin_basename = NephilaClavata::plugin_basename();
+	}
 
+	public function add_hook(){
 		add_action('admin_menu', array($this, 'admin_menu'));
 		add_filter('plugin_action_links', array($this, 'plugin_setting_links'), 10, 2 );
 	}
@@ -68,7 +79,7 @@ class NephilaClavata_Admin {
 		$nonce_name    = '_wpnonce_update_options';
 
 		$option_keys   = $this->option_keys();
-		$this->options = $this->get_option();
+		self::$options = $this->get_option();
 		$title = __('Nephila clavata', NephilaClavata::TEXT_DOMAIN);
 
 		$iv = new InputValidator('POST');
@@ -125,9 +136,9 @@ class NephilaClavata_Admin {
 			}
 
 			// Update options
-			if ($this->options !== $options) {
+			if (self::$options !== $options) {
 				update_option(self::OPTION_KEY, $options);
-				if ($this->options['s3_url'] !== $options['s3_url']) {
+				if (self::$options['s3_url'] !== $options['s3_url']) {
 					global $wpdb;
 					$sql = $wpdb->prepare(
 						"delete from {$wpdb->postmeta} where meta_key in (%s, %s)",
@@ -140,16 +151,17 @@ class NephilaClavata_Admin {
 					'<div id="message" class="updated fade"><p><strong>%s</strong></p></div>'."\n",
 					empty($err_message) ? __('Done!', NephilaClavata::TEXT_DOMAIN) : $err_message
 					);
-				$this->options = $options;
+				self::$options = $options;
 			}
 			unset($options);
 		}
 
 		// Get S3 Object
-		$s3 = new S3_helper(
-			isset($this->options['access_key']) ? $this->options['access_key'] : null,
-			isset($this->options['secret_key']) ? $this->options['secret_key'] : null,
-			isset($this->options['region']) ? $this->options['region'] : null
+		$s3 = S3_helper::get_instance();
+		$s3->init(
+			isset(self::$options['access_key']) ? self::$options['access_key'] : null,
+			isset(self::$options['secret_key']) ? self::$options['secret_key'] : null,
+			isset(self::$options['region']) ? self::$options['region'] : null
 			);
 		$regions = $this->regions;
 		$buckets = false;
@@ -182,7 +194,7 @@ class NephilaClavata_Admin {
 
 		$label = sprintf('<th><label for="%1$s">%2$s</label></th>'."\n", $field, $label);
 
-		$input_field = sprintf('<td><input type="text" name="%1$s" value="%2$s" id="%1$s" size=100 /></td>'."\n", $field, esc_attr($this->options[$field]));
+		$input_field = sprintf('<td><input type="text" name="%1$s" value="%2$s" id="%1$s" size=100 /></td>'."\n", $field, esc_attr(self::$options[$field]));
 		switch ($field) {
 		case 'region':
 			if ($regions && count($regions) > 0) {
@@ -192,7 +204,7 @@ class NephilaClavata_Admin {
 					$input_field .= sprintf(
 						'<option value="%1$s"%2$s>%3$s</option>',
 						esc_attr($region),
-						$region == $this->options[$field] ? ' selected' : '',
+						$region == self::$options[$field] ? ' selected' : '',
 						__($region, NephilaClavata::TEXT_DOMAIN));
 				}
 				$input_field .= '</select></td>';
@@ -206,7 +218,7 @@ class NephilaClavata_Admin {
 					$input_field .= sprintf(
 						'<option value="%1$s"%2$s>%1$s</option>',
 						esc_attr($bucket['Name']),
-						$bucket['Name'] == $this->options[$field] ? ' selected' : '');
+						$bucket['Name'] == self::$options[$field] ? ' selected' : '');
 				}
 				$input_field .= '</select></td>';
 			}
