@@ -23,7 +23,7 @@ class S3_helper {
 	public static function get_instance() {
 		if( !isset( self::$instance ) ) {
 			$c = __CLASS__;
-			self::$instance = new $c();    
+			self::$instance = new $c();
 		}
 
 		return self::$instance;
@@ -74,7 +74,7 @@ class S3_helper {
 	}
 
 	// S3 Upload
-	public function upload($filename, $upload_path = null, $bucket = null) {
+	public function upload($filename, $upload_path = null, $bucket = null, $storage_class = null) {
 		if (!file_exists($filename) || !$this->s3)
 			return false;
 
@@ -86,6 +86,8 @@ class S3_helper {
 				'Body'        => $this->file_body($filename),
 				'ContentType' => $this->mime_type($filename),
 				));
+			if (isset($storage_class))
+				$args['StorageClass'] = $storage_class;
 			if (isset($bucket))
 				$args['Bucket'] = $bucket;
 			if (!isset($args['Bucket']))
