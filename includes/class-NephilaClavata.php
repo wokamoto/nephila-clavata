@@ -434,8 +434,9 @@ class NephilaClavata {
         $sizes = $this->get_attachment_sizes($attachment_id);
         $images = array();
         foreach ($sizes as $size) {
-            $content_path = WP_CONTENT_DIR;
-            $content_url = WP_CONTENT_URL;
+            $upload_dir_config = wp_upload_dir();
+            $content_path = $upload_dir_config['basedir'];
+            $content_url = $upload_dir_config['baseurl'];
 
             if ( $image_src = wp_get_attachment_image_src($attachment_id, $size) ) {
                 $images[$size] = array(
