@@ -23,14 +23,19 @@ class S3_helper {
 	public static function get_instance() {
 		if( !isset( self::$instance ) ) {
 			$c = __CLASS__;
-			self::$instance = new $c();    
+			self::$instance = new $c();
 		}
 
 		return self::$instance;
 	}
 
 	public function init($access_key = null, $secret_key = null, $region = null) {
+		$flag = false;
 		if ($access_key && $secret_key) {
+			$flag = true;
+		}
+
+		if ( apply_filters( 'nephila_clavata_flag_for_ec2' , $flag ) ) {
 			$this->init_s3($access_key, $secret_key, $region);
 		}
 	}
@@ -39,11 +44,12 @@ class S3_helper {
 	public function init_s3($access_key, $secret_key, $region = null){
 		if ( !isset($region) )
 			$region = Region::AP_NORTHEAST_1;
-		$s3 = Aws::factory(array(
+		$param = array(
 			'key' => $access_key,
 			'secret' => $secret_key,
 			'region' => $this->get_region($region),
-			))->get('s3');
+		);
+		$s3 = Aws::factory( apply_filters( 'nephila_clavata_credential', $param ) )->get('s3');
 		$this->s3 = $s3;
 		return $s3;
 	}
