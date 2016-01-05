@@ -14,7 +14,7 @@ class NephilaClavata {
 	public static function get_instance() {
 		if( !isset( self::$instance ) ) {
 			$c = __CLASS__;
-			self::$instance = new $c();    
+			self::$instance = new $c();
 		}
 
 		return self::$instance;
@@ -91,6 +91,7 @@ class NephilaClavata {
 		$attachment_meta_key = self::META_KEY;
 		$s3_bucket = isset(self::$options['bucket']) ? self::$options['bucket'] : false;
 		$s3_url = isset(self::$options['s3_url']) ? self::$options['s3_url'] : false;
+		$storage_class = isset(self::$options['storage_class']) ? self::$options['storage_class'] : 'STANDARD';
 
 		// object upload to S3
 		if ( !$force ) {
@@ -111,7 +112,7 @@ class NephilaClavata {
 			$S3_medias = array();
 			foreach($S3_medias_new as $size => $val ) {
 				if ($force || !isset($S3_medias_old[$size])) {
-					$result = $this->s3_upload($val['file'], $s3_bucket, $val['s3_key']);
+					$result = $this->s3_upload($val['file'], $s3_bucket, $val['s3_key'], $storage_class);
 					$S3_medias[$size] = $val;
 				}
 				if (!file_exists($val['file'])) {
@@ -156,6 +157,7 @@ class NephilaClavata {
 
 		$s3_bucket = isset(self::$options['bucket']) ? self::$options['bucket'] : false;
 		$s3_url = isset(self::$options['s3_url']) ? self::$options['s3_url'] : false;
+		$storage_class = isset(self::$options['storage_class']) ? self::$options['storage_class'] : false;
 		if (!$s3_bucket || !$s3_url)
 			return $content;
 
@@ -215,7 +217,7 @@ class NephilaClavata {
 					$search_url  = $val['url'];
 					$replace_url = $s3_url . $val['s3_key'];
 					if (!isset($S3_medias_old[$size])) {
-						$result = $this->s3_upload($val['file'], $s3_bucket, $val['s3_key']);
+						$result = $this->s3_upload($val['file'], $s3_bucket, $val['s3_key'], $storage_class);
 						$replace_flag = !$result ? false : true;
 						if (self::DEBUG_MODE && function_exists('dbgx_trace_var')) {
 							dbgx_trace_var($result);
@@ -289,7 +291,7 @@ class NephilaClavata {
 	}
 
 	// Upload file to S3
-	private function s3_upload($filename, $S3_bucket, $S3_key){
+	private function s3_upload($filename, $S3_bucket, $S3_key, $storage_class){
 		if (!file_exists($filename))
 			return false;
 
@@ -297,7 +299,7 @@ class NephilaClavata {
 		if ($s3 = $this->s3($S3_bucket)) {
 			if ($s3->object_exists($S3_key))
 				return true;
-			$upload_result = $s3->upload($filename, $S3_key);
+			$upload_result = $s3->upload($filename, $S3_key, null, $storage_class);
 		}
 		return $upload_result;
 	}
