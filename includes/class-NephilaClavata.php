@@ -258,7 +258,7 @@ class NephilaClavata {
 			dbgx_trace_var($replace_data_org);
 		}
 		if ($post_id && ($replace_data !== $replace_data_org))
-			update_post_meta($post_id, $post_meta_key, array($s3_bucket => $replace_data), true);
+			update_post_meta($post_id, $post_meta_key, array($s3_bucket => $replace_data));
 		unset($S3_medias_new);
 		unset($S3_medias_old);
 		unset($S3_medias);
