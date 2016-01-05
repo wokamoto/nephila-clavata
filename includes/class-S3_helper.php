@@ -99,6 +99,7 @@ class S3_helper {
 			$response = $this->s3->putObject($args);
 			return $response;
 		} catch (S3Exception $e) {
+			error_log($e->__toString(),0);
 			return false;
 		}
 	}
@@ -125,6 +126,7 @@ class S3_helper {
 			file_put_contents($download_path, $response['Body']->read($response['ContentLength']));
 			return $response;
 		} catch (S3Exception $e) {
+			error_log($e->__toString(),0);
 			return false;
 		}
 	}
@@ -145,6 +147,7 @@ class S3_helper {
 			$response = $this->s3->deleteObject($args);
 			return $response;
 		} catch (S3Exception $e) {
+			error_log($e->__toString(),0);
 			return false;
 		}
 	}
@@ -157,6 +160,7 @@ class S3_helper {
 			$list_buckets = $this->s3->listBuckets();
 			return isset($list_buckets["Buckets"]) ? $list_buckets["Buckets"] : false;
 		} catch (S3Exception $e) {
+			error_log($e->__toString(),0);
 			return false;
 		}
 	}
