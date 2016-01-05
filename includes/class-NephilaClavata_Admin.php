@@ -28,7 +28,7 @@ class NephilaClavata_Admin {
 	public static function get_instance() {
 		if( !isset( self::$instance ) ) {
 			$c = __CLASS__;
-			self::$instance = new $c();    
+			self::$instance = new $c();
 		}
 
 		return self::$instance;
@@ -79,6 +79,7 @@ class NephilaClavata_Admin {
 		$nonce_name    = '_wpnonce_update_options';
 
 		$option_keys   = $this->option_keys();
+		$option_keys   = apply_filters( 'nephila_clavata_option_keys', $option_keys );
 		self::$options = $this->get_option();
 		$title = __('Nephila clavata', NephilaClavata::TEXT_DOMAIN);
 
