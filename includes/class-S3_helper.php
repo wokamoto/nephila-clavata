@@ -1,6 +1,7 @@
 <?php
-require_once(dirname(__FILE__).'/aws.phar');
-
+if( ! defined("AWS-2.8.22.PHAR_PHAR") ){
+	require_once(dirname(__FILE__).'/aws.phar');
+}
 use Aws\Common\Aws;
 use Aws\Common\Enum\Region;
 use Aws\S3\Enum\CannedAcl;
