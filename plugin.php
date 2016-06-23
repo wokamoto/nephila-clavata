@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: Nephila clavata
-Version: 0.2.4
+Version: 0.2.5
 Plugin URI: https://github.com/wokamoto/nephila-clavata
-Description: Media uploader for AWS S3.Allows you to mirror your WordPress media uploads over to Amazon S3 for storage and delivery. 
+Description: Media uploader for AWS S3.Allows you to mirror your WordPress media uploads over to Amazon S3 for storage and delivery.
 Author: wokamoto
 Author URI: http://dogmap.jp/
 Text Domain: nephila-clavata
