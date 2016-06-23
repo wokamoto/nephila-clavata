@@ -77,7 +77,7 @@ class NephilaClavata_Admin {
 
 		$title = __('Nephila clavata', NephilaClavata::TEXT_DOMAIN);
 		$this->admin_hook = add_options_page($title, $title, 'manage_options', self::OPTION_PAGE, array($this, 'options_page'));
-		$this->admin_action = admin_url('/options-general.php') . '?page=' . self::OPTION_PAGE;
+		$this->admin_action = admin_url( apply_filters( 'nephila_clavata_admin_url', '/options-general.php') ) . '?page=' . self::OPTION_PAGE;
 	}
 
 	public function options_page(){
