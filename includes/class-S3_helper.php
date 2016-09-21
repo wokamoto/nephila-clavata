@@ -18,6 +18,7 @@ class S3_helper {
 		'StorageClass' => 'STANDARD',
 		'ACL' => CannedAcl::PUBLIC_READ,
 		);
+    private $s3_api_version = '2006-03-01';
 
 	private function __construct() {}
 
@@ -49,6 +50,7 @@ class S3_helper {
 			'key' => $access_key,
 			'secret' => $secret_key,
 			'region' => $this->get_region($region),
+            'version' => $this->s3_api_version,
 		);
 		$s3 = Aws::factory( apply_filters( 'nephila_clavata_credential', $param ) )->get('s3');
 		$this->s3 = $s3;
